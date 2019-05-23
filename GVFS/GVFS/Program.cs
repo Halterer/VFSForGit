@@ -27,6 +27,7 @@ namespace GVFS
                 typeof(RepairVerb),
                 typeof(ServiceVerb),
                 typeof(StatusVerb),
+                typeof(TestVerb),
                 typeof(UnmountVerb),
                 typeof(UpgradeVerb),
             };
@@ -45,6 +46,8 @@ namespace GVFS
             catch (IOException)
             {
             }
+
+            Console.WriteLine("Parsing...");
 
             try
             {
