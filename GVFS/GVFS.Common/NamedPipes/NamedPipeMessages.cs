@@ -100,6 +100,28 @@ namespace GVFS.Common.NamedPipes
             }
         }
 
+        public static class Placeholders
+        {
+            public const string Request = "Placeholders";
+            public const string SuccessResult = "S";
+            public class Response
+            {
+                public Response(string result, string data = "")
+                {
+                    this.Result = result;
+                    this.Data = data;
+                }
+
+                public string Result { get; }
+                public string Data { get; }
+
+                public Message CreateMessage()
+                {
+                    return new Message(this.Result, this.Data);
+                }
+            }
+        }
+
         public static class DownloadObject
         {
             public const string DownloadRequest = "DLO";

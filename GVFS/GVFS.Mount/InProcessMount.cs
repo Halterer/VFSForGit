@@ -262,6 +262,10 @@ namespace GVFS.Mount
                     this.HandlePostFetchJobRequest(message, connection);
                     break;
 
+                case NamedPipeMessages.Placeholders.Request:
+                    this.HandleGetPlaceholdersRequest(connection);
+                    break;
+
                 default:
                     EventMetadata metadata = new EventMetadata();
                     metadata.Add("Area", "Mount");
@@ -526,6 +530,23 @@ namespace GVFS.Mount
                     connection.TrySendResponse(NamedPipeMessages.UnknownGVFSState);
                     break;
             }
+        }
+
+        private void HandleGetPlaceholdersRequest(NamedPipeServer.Connection connection)
+        {
+            NamedPipeMessages.Placeholders.Response response;
+            if (this.currentState != MountState.Ready)
+            {
+                response = new NamedPipeMessages.Placeholders.Response(NamedPipeMessages.MountNotReadyResult);
+            }
+            else
+            {
+                string data = this.fileSystemCallbacks.GitIndexProjection.PlaceholderCount.ToString();
+                this.fileSystemCallbacks.Get
+                response = new NamedPipeMessages.Placeholders.Response(NamedPipeMessages.Placeholders.SuccessResult, data);
+            }
+
+            connection.TrySendResponse(response.CreateMessage());
         }
 
         private void MountAndStartWorkingDirectoryCallbacks(CacheServerInfo cache)

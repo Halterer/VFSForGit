@@ -1,0 +1,103 @@
+[33mcommit 4787883df4e5549bbe45e0c16bebbf44aea83155[m[33m ([m[1;36mHEAD -> [m[1;32mReadmeUpdate[m[33m, [m[1;31morigin/ReadmeUpdate[m[33m)[m
+Author: Benjamin Floyd <t-befloy@microsoft.com>
+Date:   Tue May 21 14:38:09 2019 -0400
+
+    Fixed typo in Windows install directions in Readme
+    
+    In the Readme document, there was an typo in the Windows installation
+    directions. The document had the path for the installer as
+    ...\BuildOutput\GVFS.Installer\...
+    Where it should have been
+    ...\BuildOutput\GVFS.Installer.Windows\...
+    For installation on a windows machine.
+
+[33mcommit 2ae2527a92e5c04b989515cd65304282bec88ab2[m[33m ([m[1;31mupstream/master[m[33m, [m[1;31mupstream/HEAD[m[33m, [m[1;31morigin/master[m[33m, [m[1;32mvv[m[33m, [m[1;32mmaster[m[33m)[m
+Merge: 0bb9daef 22586bdf
+Author: Derrick Stolee <570044+derrickstolee@users.noreply.github.com>
+Date:   Mon May 20 13:51:02 2019 -0400
+
+    Merge pull request #1178: Repack: use one thread, but allow deltas
+    
+    When running 'git multi-pack-index repack', we are setting two
+    config options intended to speed up the underlying 'git pack-objects'
+    command:
+    
+        pack.delta=0    (default is 50)
+        pack.window=0   (default is 10)
+    
+    These were inserted to prevent the delta calculations from taking over
+    a user's processor during a background operation. When packing the
+    from-loose packs, this can become an expensive operation.
+    
+    However, this came with a significant downside, due to my
+    misunderstanding of how these options work. When repacking the (already
+    nicely-packed) prefetch packs, these options force deltified trees
+    to become un-deltified. This means the resulting pack can be larger
+    than the given batch size.
+    
+    To prevent losing these good deltas, drop these config options and
+    instead use pack.threads=1 to prevent multiple threads from taking
+    over the machine. In combination with the recent lower-priority git
+    processes, this should keep the background repack from disrupting
+    users, but will also keep our pack directory small.
+    
+    In my testing, I used the Windows repository and ran the packfile
+    maintenance step with a batch size of "100m" instead of "2g". This
+    allowed me to run it with my real data, which was currently in a
+    state where "2g" would do nothing.
+    
+    Before: 588m pack, repack took 50s
+     After:  80m pack, repack took 28s*
+    
+    The fact that the repack sped up is possibly related to writing
+    less data to disk. I would expect this to slow down in some cases.
+    
+    This expansion of deltas explains why users running the packfile
+    maintenance step directly have a higher than expected steady-state.
+    We are not-optimally repacking the data.
+
+[33mcommit 22586bdf28a0d0c4b7ced07190c8ad5f7bfd3787[m
+Author: Derrick Stolee <dstolee@microsoft.com>
+Date:   Mon May 20 09:55:33 2019 -0400
+
+    Repack: use one thread, but allow deltas
+    
+    When running 'git multi-pack-index repack', we are setting two
+    config options intended to speed up the underlying 'git pack-objects'
+    command:
+    
+        pack.delta=0    (default is 50)
+        pack.window=0   (default is 10)
+    
+    These were inserted to prevent the delta calculations from taking over
+    a user's processor during a background operation. When packing the
+    from-loose packs, this can become an expensive operation.
+    
+    However, this came with a significant downside, due to my
+    misunderstanding of how these options work. When repacking the (already
+    nicely-packed) prefetch packs, these options force deltified trees
+    to become un-deltified. This means the resulting pack can be larger
+    than the given batch size.
+    
+    To prevent losing these good deltas, drop these config options and
+    instead use pack.threads=1 to prevent multiple threads from taking
+    over the machine. In combination with the recent lower-priority git
+    processes, this should keep the background repack from disrupting
+    users, but will also keep our pack directory small.
+    
+    In my testing, I used the Windows repository and ran the packfile
+    maintenance step with a batch size of "100m" instead of "2g". This
+    allowed me to run it with my real data, which was currently in a
+    state where "2g" would do nothing.
+    
+    Before: 588m pack, repack took 50s
+     After:  80m pack, repack took 28s*
+    
+    The fact that the repack sped up is possibly related to writing
+    less data to disk. I would expect this to slow down in some cases.
+    
+    This expansion of deltas explains why users running the packfile
+    maintenance step directly have a higher than expected steady-state.
+    We are not-optimally repacking the data.
+    
+    Signed-off-by: Derrick Stolee <dstolee@microsoft.com>
